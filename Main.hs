@@ -13,6 +13,8 @@ import Value
 evalExpr :: StateT -> Expression -> StateTransformer Value
 evalExpr env (VarRef (Id id)) = stateLookup env id
 evalExpr env (IntLit int) = return $ Int int
+evalExpr env (ArrayLit (x:xs)) = return $ List values
+    where values = evalList env (x:xs) []
 evalExpr env (InfixExpr op expr1 expr2) = do
     v1 <- evalExpr env expr1
     v2 <- evalExpr env expr2
@@ -26,6 +28,21 @@ evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
         _ -> do
             e <- evalExpr env expr
             setVar var e
+
+-- Funcao para transformar uma lista de expression em uma lista de value
+evalList :: StateT -> [Expression] -> [Value] -> [Value]
+evalList env [] list = list
+evalList env (x:xs) list = evalList env xs postList
+    where postList = list ++ [exprToValue env x]
+
+-- Funcao para transformar Expression em Value
+exprToValue :: StateT -> Expression -> Value
+exprToValue env expr = getValue $ evalExpr env expr
+
+-- Funcao para pegar o value do StateTransformer
+getValue :: StateTransformer Value -> Value
+getValue (ST f) = valor
+    where (valor,estado) = f empty 
 
 evalStmt :: StateT -> Statement -> StateTransformer Value
 evalStmt env EmptyStmt = return Nil
