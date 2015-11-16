@@ -13,6 +13,8 @@ import Value
 evalExpr :: StateT -> Expression -> StateTransformer Value
 evalExpr env (VarRef (Id id)) = stateLookup env id
 evalExpr env (IntLit int) = return $ Int int
+evalExpr env (BoolLit bool) = return $ Bool bool
+evalExpr env (StringLit str ) = return $ String str
 evalExpr env (ArrayLit []) = return $ Nil
 evalExpr env (ArrayLit (x:xs)) = return $ List values
     where values = evalList env (x:xs) []
@@ -29,7 +31,28 @@ evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
         _ -> do
             e <- evalExpr env expr
             setVar var e
+evalExpr env (CallExpr functionName paramsExpCall) = do
+     result <- evalExpr env functionName
+     case result of
+        (Error _) -> error "Function not defined"
+        (FunctionValue name params listaStmts) -> ST $ \s -> -- s eh o estado externo
+            -- avalia todos os parametros passados na chamada da funcao
 
+            let (ST f1) = mapM (evalExpr env) paramsExpCall                  -- parametros avaliados eh o resultado
+                -- parametros avaliados eh o resultado da aplicacao de b com o estado externo
+                (paramsEval, _) = f1 s
+                -- zip dos paarmetros de chamada avaliados com os parametros criados na declaracao da funcao
+                parameters = fromList (zip (Prelude.map (\(Id a) -> a) params) paramsEval)
+                -- novo estado eh a uniao do estado antigo com as variaveis
+                newS = union parameters s
+                -- com o novo estado podemos avaliar o bloco de statements
+
+                -- // VARRER O BLOCO DE STMT E SE TIVER VARIAVEIS NAO DECLARADAS CONSIDERAR GLOBAIS E ADICIONAR AO ESTADO GLOBAL 's'
+                (ST g) = evalStmt env (BlockStmt listaStmts)
+
+                (f, finalS) = g newS
+
+            in (f, (union (intersection (difference finalS parameters) s) s))
 -- Funcao para transformar uma lista de expression em uma lista de value
 evalList :: StateT -> [Expression] -> [Value] -> [Value]
 evalList env [] list = list
@@ -55,6 +78,7 @@ evalStmt env (VarDeclStmt []) = return Nil
 evalStmt env (VarDeclStmt (decl:ds)) =
     varDecl env decl >> evalStmt env (VarDeclStmt ds)
 evalStmt env (ExprStmt expr) = evalExpr env expr
+evalStmt env (FunctionStmt f@(Id name) params statements) = setVar name (FunctionValue f params statements)
 
 -- Do not touch this one :)
 evaluate :: StateT -> [Statement] -> StateTransformer Value
