@@ -61,18 +61,16 @@ evalExpr env (CallExpr functionName paramsExpCall) = do
      result <- evalExpr env functionName
      case result of
         (Error _) -> error "Function not defined"
-        (FunctionValue name params listaStmts) -> ST $ \s -> -- s eh o estado externo
-            -- avalia todos os parametros passados na chamada da funcao
-
-            let (ST f1) = mapM (evalExpr env) paramsExpCall                  -- parametros avaliados eh o resultado
-                -- parametros avaliados eh o resultado da aplicacao de b com o estado externo
+        (FunctionValue name params listaStmts) -> ST $ \s -> 
+            
+            let (ST f1) = mapM (evalExpr env) paramsExpCall                
+               
                 (paramsEval, _) = f1 s
-                -- zip dos paarmetros de chamada avaliados com os parametros criados na declaracao da funcao
+                
                 parameters = fromList (zip (Prelude.map (\(Id a) -> a) params) paramsEval)
-                -- novo estado eh a uniao do estado antigo com as variaveis
+                
                 newS = union parameters s
-                -- com o novo estado podemos avaliar o bloco de statements
-                -- // VARRER O BLOCO DE STMT E SE TIVER VARIAVEIS NAO DECLARADAS CONSIDERAR GLOBAIS E ADICIONAR AO ESTADO GLOBAL 's'
+                
                 (ST g) = evalStmt env (BlockStmt listaStmts)
 
                 (f, finalS) = g newS
@@ -88,8 +86,7 @@ evalExpr env (CallExpr functionName paramsExpCall) = do
                             _ -> False
                  ) varDaFunct  
 
-            in (f, (union globais s))
-            --in (f, (union (intersection (difference finalS parameters) s) s))
+            in (f, (union globais (union (intersection (difference finalS parameters) s) s)))
 -- Funcao para transformar uma lista de expression em uma lista de value
 
 evalList :: StateT -> [Expression] -> [Value] -> [Value]
@@ -198,9 +195,9 @@ infixOp env OpNEq  (Bool v1) (Bool v2) = return $ Bool $ v1 /= v2
 infixOp env OpLAnd (Bool v1) (Bool v2) = return $ Bool $ v1 && v2
 infixOp env OpLOr  (Bool v1) (Bool v2) = return $ Bool $ v1 || v2
 
-infixOp env OpEq   (List []) (List []) = return $ Bool $ True
-infixOp env OpEq   (List []) (List _) = return $ Bool $ False
-infixOp env OpEq   (List _) (List []) = return $ Bool $ False
+infixOp env OpEq   (List []) (List []) = return $ Bool True
+infixOp env OpEq   (List []) (List l) =  return $ Bool False
+infixOp env OpEq   (List l) (List []) =  return $ Bool False
 infixOp env OpEq   (List v1) (List v2) = do 
     b1 <- infixOp env OpEq (head v1) (head v2)
     b2 <- infixOp env OpEq (List (tail v1)) (List (tail v2))
@@ -222,7 +219,7 @@ infixOp env op v1 (Var x) = do
     case var of
         error@(Error _) -> return error
         val -> infixOp env op v1 val
-
+        
 --
 -- Environment and auxiliary functions
 --

@@ -1,13 +1,18 @@
-var x = 0;
-
-function rola()
+function lenAux(x,y)
 {
-	x = x + 1;
-	if(x < 3)
-	{
-		rola();
+	var k = [];
+	var w = (x == k);
+	if(w){
+		return y;
+	}else{
+		return lenAux(x.tail, y+1);
 	}
 }
 
-rola();
+function len (x){
+	return lenAux(x,0);
+}
+
+var lista1 = [1,2,3];
+var c = len(lista1);
 
