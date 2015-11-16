@@ -4,6 +4,7 @@ function f (x){
 	}else {
 		return f(x-1);
 	}
+	y = x;
 }
 
 var x = f(5);

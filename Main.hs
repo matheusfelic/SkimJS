@@ -182,6 +182,7 @@ evaluate env (s:ss) = evalStmt env s >> evaluate env ss
 
 infixOp :: StateT -> InfixOp -> Value -> Value -> StateTransformer Value
 infixOp env OpAdd  (Int  v1) (Int  v2) = return $ Int  $ v1 + v2
+infixOp env OpAdd  (Return v1) (Return v2) = infixOp env OpAdd v1  v2
 infixOp env OpSub  (Int  v1) (Int  v2) = return $ Int  $ v1 - v2
 infixOp env OpMul  (Int  v1) (Int  v2) = return $ Int  $ v1 * v2
 infixOp env OpDiv  (Int  v1) (Int  v2) = return $ Int  $ div v1 v2

@@ -1,15 +1,14 @@
-var lista1 = [1,2,3];
-var lista2 = [4,5,6];
-var lista3 = [1,2,3];
-
-if(lista1 == lista2){
-	lista1 = concat(lista1,lista2);
+function x (i)
+{
+	if(i < 2)
+	{
+		return 1;
+	}
+	else
+	{
+		var ret1 = x(i - 1) + x(i - 2);
+		return ret1; 
+	}
 }
 
-if(lista1 == lista3){
-	lista1 = concat(lista1,lista2);
-}
-
-if(lista1 != lista3){
-	lista3 = concat(lista3,lista1);
-}
+x(5);
