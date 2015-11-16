@@ -11,7 +11,7 @@ evalForInit :: StateT -> ForInit -> StateTransformer Value
 evalForInit env NoInit = return Nil -- for(; anything);
 evalForInit env (VarInit []) = return Nil --for([]; anything)
 evalForInit env (VarInit (x:xs)) =
-	varDecl env x >> evalForInit env (VarInit xs) -- for([1,2,3]; anything)
+    varDecl env x >> evalForInit env (VarInit xs) -- for([1,2,3]; anything)
 evalForInit env (ExprInit expr) = evalExpr env expr -- for(int x = 0; anything)
 
 
@@ -24,9 +24,23 @@ evalExpr env (VarRef (Id id)) = stateLookup env id
 evalExpr env (IntLit int) = return $ Int int
 evalExpr env (BoolLit bool) = return $ Bool bool
 evalExpr env (StringLit str ) = return $ String str
-evalExpr env (ArrayLit []) = return $ Nil
+evalExpr env (ArrayLit []) = return $ List []
 evalExpr env (ArrayLit (x:xs)) = return $ List values
     where values = evalList env (x:xs) []
+evalExpr env (DotRef expr id) = do
+        case id of
+            (Id "head") -> do
+                list <- evalExpr env expr
+                case list of
+                    (List []) -> return $ List []
+                    (List (x:xs)) -> return x
+                    _ -> error ("Invalid Expression")
+            (Id "tail") -> do
+                list <- evalExpr env expr
+                case list of
+                    (List []) -> return $ List []
+                    (List (x:xs)) -> return $ List xs
+                    _ -> error ("Invalid Expression")
 evalExpr env (InfixExpr op expr1 expr2) = do
     v1 <- evalExpr env expr1
     v2 <- evalExpr env expr2
@@ -35,7 +49,10 @@ evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
     v <- stateLookup env var
     case v of
         -- Variable not defined :(
-       -- (Error _) -> return $ Error $ (show var) ++ " not defined"
+        (Error _) ->  do                  -- variavel global
+            e <- evalExpr env expr
+            setVar var (Undeclared e)
+                                         
         -- Variable defined, let's set its value
         _ -> do
             e <- evalExpr env expr
@@ -55,14 +72,26 @@ evalExpr env (CallExpr functionName paramsExpCall) = do
                 -- novo estado eh a uniao do estado antigo com as variaveis
                 newS = union parameters s
                 -- com o novo estado podemos avaliar o bloco de statements
-
                 -- // VARRER O BLOCO DE STMT E SE TIVER VARIAVEIS NAO DECLARADAS CONSIDERAR GLOBAIS E ADICIONAR AO ESTADO GLOBAL 's'
                 (ST g) = evalStmt env (BlockStmt listaStmts)
 
                 (f, finalS) = g newS
 
-            in (f, (union (intersection (difference finalS parameters) s) s))
+                semParametros = (difference finalS parameters)
+
+                varDaFunct = (difference semParametros s)
+                --show varDaFunct
+                globais =  Map.filter (
+                    \x -> 
+                        case x of 
+                            (Undeclared z) -> True
+                            _ -> False
+                 ) varDaFunct  
+
+            in (f, (union globais s))
+            --in (f, (union (intersection (difference finalS parameters) s) s))
 -- Funcao para transformar uma lista de expression em uma lista de value
+
 evalList :: StateT -> [Expression] -> [Value] -> [Value]
 evalList env [] list = list
 evalList env (x:xs) list = evalList env xs postList
@@ -84,6 +113,12 @@ getValue (ST f) = valor
 evalStmt :: StateT -> Statement -> StateTransformer Value
 evalStmt env EmptyStmt = return Nil
 evalStmt env (VarDeclStmt []) = return Nil
+evalStmt env (ReturnStmt expression) = do
+    case expression of
+        (Nothing) -> return (Return Nil)
+        (Just expr) -> do
+            exprEval <- evalExpr env expr
+            return (Return exprEval)
 evalStmt env (VarDeclStmt (decl:ds)) =
     varDecl env decl >> evalStmt env (VarDeclStmt ds)
 evalStmt env (ExprStmt expr) = evalExpr env expr
@@ -162,6 +197,19 @@ infixOp env OpEq   (Int  v1) (Int  v2) = return $ Bool $ v1 == v2
 infixOp env OpNEq  (Bool v1) (Bool v2) = return $ Bool $ v1 /= v2
 infixOp env OpLAnd (Bool v1) (Bool v2) = return $ Bool $ v1 && v2
 infixOp env OpLOr  (Bool v1) (Bool v2) = return $ Bool $ v1 || v2
+
+infixOp env OpEq   (List []) (List []) = return $ Bool $ True
+infixOp env OpEq   (List []) (List _) = return $ Bool $ False
+infixOp env OpEq   (List _) (List []) = return $ Bool $ False
+infixOp env OpEq   (List v1) (List v2) = do 
+    b1 <- infixOp env OpEq (head v1) (head v2)
+    b2 <- infixOp env OpEq (List (tail v1)) (List (tail v2))
+    ans <- (infixOp env OpLAnd b1 b2)
+    return ans
+infixOp env OpNEq  (List list1) (List list2) = do
+    (Bool notAns) <- infixOp env OpEq  (List list1) (List list2)
+    return $ Bool $ not (notAns)
+infixOp env OpAdd   (List v1) (List v2) = return $ List $ v1++v2
 
 infixOp env op (Var x) v2 = do
     var <- stateLookup env x

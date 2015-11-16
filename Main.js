@@ -1,3 +1,13 @@
+var x = 0;
 
-var z = "rosquinhas";
+function rola()
+{
+	x = x + 1;
+	if(x < 3)
+	{
+		rola();
+	}
+}
+
+rola();
 

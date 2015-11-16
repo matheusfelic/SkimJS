@@ -9,6 +9,7 @@ data Value = Bool Bool
     | Error String
     | FunctionValue Id [Id] [Statement]
     | Return Value
+    | Undeclared Value
     | Break
     | Nil
 
@@ -25,6 +26,7 @@ instance Show Value where
   show (List val) = show val
   show (Error str) = "Error: " ++ str
   show (Return a) = show a
+  show (Undeclared a) = show a
   show (FunctionValue (Id name) params statemens) =  "Function " ++ name
   show Nil = ""
   show Break = "Break"
