@@ -6,13 +6,14 @@ import Data.Map as Map
 import Debug.Trace
 import Value
 
---
--- Evaluate functions
---
+-- ////////////////////////////////////////////////////
+-- ////////////////// Evaluate Expression /////////////
+-- ////////////////////////////////////////////////////
 
 evalExpr :: StateT -> Expression -> StateTransformer Value
 evalExpr env (VarRef (Id id)) = stateLookup env id
 evalExpr env (IntLit int) = return $ Int int
+evalExpr env (ArrayLit []) = return $ Nil
 evalExpr env (ArrayLit (x:xs)) = return $ List values
     where values = evalList env (x:xs) []
 evalExpr env (InfixExpr op expr1 expr2) = do
@@ -43,6 +44,10 @@ exprToValue env expr = getValue $ evalExpr env expr
 getValue :: StateTransformer Value -> Value
 getValue (ST f) = valor
     where (valor,estado) = f empty 
+
+-- ////////////////////////////////////////////////////
+-- ////////////////// Evaluate Statements /////////////
+-- ////////////////////////////////////////////////////
 
 evalStmt :: StateT -> Statement -> StateTransformer Value
 evalStmt env EmptyStmt = return Nil
