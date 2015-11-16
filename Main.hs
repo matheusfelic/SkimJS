@@ -6,6 +6,15 @@ import Data.Map as Map
 import Debug.Trace
 import Value
 
+-- Evalute For Init values
+evalForInit :: StateT -> ForInit -> StateTransformer Value
+evalForInit env NoInit = return Nil -- for(; anything);
+evalForInit env (VarInit []) = return Nil --for([]; anything)
+evalForInit env (VarInit (x:xs)) =
+	varDecl env x >> evalForInit env (VarInit xs) -- for([1,2,3]; anything)
+evalForInit env (ExprInit expr) = evalExpr env expr -- for(int x = 0; anything)
+
+
 -- ////////////////////////////////////////////////////
 -- ////////////////// Evaluate Expression /////////////
 -- ////////////////////////////////////////////////////
@@ -79,6 +88,55 @@ evalStmt env (VarDeclStmt (decl:ds)) =
     varDecl env decl >> evalStmt env (VarDeclStmt ds)
 evalStmt env (ExprStmt expr) = evalExpr env expr
 evalStmt env (FunctionStmt f@(Id name) params statements) = setVar name (FunctionValue f params statements)
+
+-- IfElse evalStmt quando avalia tru ou fals vai para o BlockStmt
+evalStmt env (IfStmt expr tru fals) = do
+    result <- evalExpr env expr 
+    case result of
+        (Bool b) -> if b then (evalStmt env tru) else (evalStmt env fals)
+        error@(Error _) -> return error
+-- If evalStmt quando avalia tru vai para o BlockStmt
+evalStmt env (IfSingleStmt expr tru) = do
+    result <- evalExpr env expr
+    case result of
+        (Bool b) -> if b then (evalStmt env tru) else return Nil 
+        error@(Error _) -> return error
+
+evalStmt env (BlockStmt []) = return Nil -- {... [] }
+evalStmt env (BlockStmt ((BreakStmt Nothing):xs)) = return Break -- { break }
+evalStmt env (BlockStmt (x:xs)) = do
+    result <- evalStmt env x -- avalia o proximo stmt 
+    case result of
+        (Return a) -> return (Return a) -- {... return x}
+        (Break) -> return Break -- {... break})
+        _ -> evalStmt env (BlockStmt xs) -- chamada recursiva para avaliar o restante
+
+evalStmt env (ForStmt initial maybeComparation maybeIncrement stmts) = do
+    evalForInit env initial
+    case maybeComparation of
+        Nothing -> do
+            a <-evalStmt env stmts 
+            case a of
+                Break -> return Break
+                (Return val) -> return (Return val)
+                _ -> case maybeIncrement of
+                    Nothing -> evalStmt env (ForStmt NoInit Nothing Nothing stmts) 
+                    (Just increment) -> evalExpr env increment >>  (evalStmt env (ForStmt NoInit Nothing maybeIncrement stmts))
+        (Just comparation) -> do
+            result <- evalExpr env comparation
+            case result of
+                (Bool b) -> if b then do
+                   value <- evalStmt env stmts
+                   case value of
+                    Break -> return Break
+                    (Return val) -> return (Return val) 
+                    _ -> case maybeIncrement of
+                        Nothing -> do
+                             evalStmt env (ForStmt NoInit maybeComparation Nothing stmts)
+                        (Just increment) -> do
+                            evalExpr env increment
+                            evalStmt env (ForStmt NoInit maybeComparation maybeIncrement stmts)
+                else return Nil        
 
 -- Do not touch this one :)
 evaluate :: StateT -> [Statement] -> StateTransformer Value
