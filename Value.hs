@@ -1,10 +1,14 @@
 module Value (Value (..)) where
+import Language.ECMAScript3.Syntax  
 
 data Value = Bool Bool
     | Int Int
     | String String
     | Var String
     | Error String
+    | FunctionValue Id [Id] [Statement]
+    | Return Value
+    | Break
     | Nil
 
 --
@@ -18,7 +22,10 @@ instance Show Value where
   show (String str) = "\"" ++ str ++ "\""
   show (Var name) = name
   show (Error str) = "Error: " ++ str
+  show (Return a) = show a
+  show (FunctionValue (Id name) params statemens) =  "Function " ++ name
   show Nil = ""
+  show Break = "Break"
   
 -- This function could be replaced by (unwords.map show). The unwords
 -- function takes a list of String values and uses them to build a 

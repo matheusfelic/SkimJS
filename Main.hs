@@ -21,11 +21,16 @@ evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
     v <- stateLookup env var
     case v of
         -- Variable not defined :(
-        (Error _) -> return $ Error $ (show var) ++ " not defined"
+       -- (Error _) -> return $ Error $ (show var) ++ " not defined"
         -- Variable defined, let's set its value
         _ -> do
             e <- evalExpr env expr
             setVar var e
+
+evalExpr env (ArrayLit []) = return Nil
+evalExpr env (ArrayLit (x:xs)) = evalExpr env x >> evalExpr env (ArrayLit xs)
+	
+
 
 evalStmt :: StateT -> Statement -> StateTransformer Value
 evalStmt env EmptyStmt = return Nil
