@@ -5,6 +5,7 @@ data Value = Bool Bool
     | Int Int
     | String String
     | Var String
+    | List [Value]
     | Error String
     | FunctionValue Id [Id] [Statement]
     | Return Value
@@ -21,6 +22,7 @@ instance Show Value where
   show (Int int) = show int
   show (String str) = "\"" ++ str ++ "\""
   show (Var name) = name
+  show (List val) = show val
   show (Error str) = "Error: " ++ str
   show (Return a) = show a
   show (FunctionValue (Id name) params statemens) =  "Function " ++ name
