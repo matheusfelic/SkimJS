@@ -45,6 +45,18 @@ evalExpr env (InfixExpr op expr1 expr2) = do
     v1 <- evalExpr env expr1
     v2 <- evalExpr env expr2
     infixOp env op v1 v2
+evalExpr env (UnaryAssignExpr PostfixDec (LVar var)) = do
+    v <- stateLookup env var
+    case v of 
+        (Error _) -> error("Variable "++ show var ++" Not Defined")
+        (Int i) -> do
+            setVar var (Int(i- 1))
+evalExpr env (UnaryAssignExpr PostfixInc (LVar var)) = do
+    v <- stateLookup env var
+    case v of 
+        (Error _) -> error("Variable "++ show var ++" Not Defined")
+        (Int i)-> do
+            setVar var (Int( i + 1))
 evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
     v <- stateLookup env var
     case v of
