@@ -50,13 +50,17 @@ evalExpr env (UnaryAssignExpr PostfixDec (LVar var)) = do
     case v of 
         (Error _) -> error("Variable "++ show var ++" Not Defined")
         (Int i) -> do
-            setVar var (Int(i- 1))
+            setVar var (Int(i - 1))
+        (Undeclared (Int i)) -> do
+            setVar var (Int(i - 1))
 evalExpr env (UnaryAssignExpr PostfixInc (LVar var)) = do
     v <- stateLookup env var
     case v of 
         (Error _) -> error("Variable "++ show var ++" Not Defined")
         (Int i)-> do
             setVar var (Int( i + 1))
+        (Undeclared (Int i)) -> do
+            setVar var (Int(i + 1))
 evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
     v <- stateLookup env var
     case v of
@@ -193,6 +197,9 @@ evaluate env (s:ss) = evalStmt env s >> evaluate env ss
 --
 
 infixOp :: StateT -> InfixOp -> Value -> Value -> StateTransformer Value
+infixOp env op (Undeclared v1)  (Undeclared v2) = infixOp env op v1 v2
+infixOp env op (Undeclared v1)  v2 = infixOp env op v1 v2
+infixOp env op v1  (Undeclared v2) = infixOp env op v1 v2
 infixOp env OpAdd  (Int  v1) (Int  v2) = return $ Int  $ v1 + v2
 infixOp env OpAdd  (Return v1) (Return v2) = infixOp env OpAdd v1  v2
 infixOp env OpSub  (Int  v1) (Int  v2) = return $ Int  $ v1 - v2
@@ -207,7 +214,6 @@ infixOp env OpEq   (Int  v1) (Int  v2) = return $ Bool $ v1 == v2
 infixOp env OpNEq  (Bool v1) (Bool v2) = return $ Bool $ v1 /= v2
 infixOp env OpLAnd (Bool v1) (Bool v2) = return $ Bool $ v1 && v2
 infixOp env OpLOr  (Bool v1) (Bool v2) = return $ Bool $ v1 || v2
-
 infixOp env OpEq   (List []) (List []) = return $ Bool True
 infixOp env OpEq   (List []) (List l) =  return $ Bool False
 infixOp env OpEq   (List l) (List []) =  return $ Bool False
@@ -224,15 +230,17 @@ infixOp env OpAdd   (List v1) (List v2) = return $ List $ v1++v2
 infixOp env op (Var x) v2 = do
     var <- stateLookup env x
     case var of
-        error@(Error _) -> return error
+        error@(Error _) -> return error 
         val -> infixOp env op val v2
 
 infixOp env op v1 (Var x) = do
     var <- stateLookup env x
     case var of
-        error@(Error _) -> return error
+        error@(Error _) -> return error 
         val -> infixOp env op v1 val
-        
+
+infixOp env op _ _ = do 
+     error "Function is not defined for these arguments"
 --
 -- Environment and auxiliary functions
 --
