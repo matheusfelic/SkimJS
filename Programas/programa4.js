@@ -1,10 +1,7 @@
-function f (x){
-	if(x==0){
-		return 0;
-	}else {
-		return f(x-1);
+var x = 10;
+while(true){
+	x--;
+	if(x == 3){
+		break;
 	}
-	y = x;
 }
-
-var x = f(5);

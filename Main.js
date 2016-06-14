@@ -18,12 +18,12 @@ function conca (ls, xs){
 }
  
 function quicksort(l){
-	var arrayEmpty = [];
-	if (l == arrayEmpty){
-		return arrayEmpty;
-	}
+    var arrayEmpty = [];
+    if (l == arrayEmpty){
+        return arrayEmpty;
+    }
     var arrayHead = l.head;
-	var listHead = [arrayHead];
+    var listHead = [arrayHead];
     var menor = [];
     var maior = [];
     var result = [];

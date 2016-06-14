@@ -1,9 +1,7 @@
-for(var x=10; x > 0; x--){
-	if(x == 5){
-		var y = 10;
+var x = 0;
+while(x < 10){
+	x++;
+	if(x == 4){
 		break;
 	}
 }
-
-x;
-y;
