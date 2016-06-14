@@ -34,19 +34,13 @@ evalExpr env (DotRef expr id) = do
                 case list of
                     (List []) -> return $ List []
                     (List (x:xs)) -> return x
-                    _ -> error ("Invalid Expression")
+                    _ -> error ("Invalid Expression in Head")
             (Id "tail") -> do
                 list <- evalExpr env expr
                 case list of
                     (List []) -> return $ List []
                     (List (x:xs)) -> return $ List xs
-                    _ -> error ("Invalid Expression")
-            (Id "concat") -> do -- evaluating concat
-                list <- evalExpr env expr
-                case list of
-                    (List []) -> return $ List []
-                    (List xs) -> return $ List xs
-                    _ -> error ("Invalid Expression")
+                    _ -> error ("Invalid Expression in Tail")
 
 evalExpr env (InfixExpr op expr1 expr2) = do
     v1 <- evalExpr env expr1
@@ -84,12 +78,11 @@ evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
 evalExpr env (CallExpr (DotRef (VarRef (Id var1))  functionId) parameters) = do
     v1 <- stateLookup env var1
     case functionId of
-        -- Variable not defined :(
-        (Id "concat") ->  do                  -- variavel global
+        
+        (Id "concat") ->  do                  
             v2 <- head (Prelude.map (evalExpr env) parameters)
             setVar var1 (concatAux v1 v2)
                                          
-        -- Variable defined, let's set its value
         _ -> do
             error ("dotRef Function Not Defined")
 
@@ -123,6 +116,7 @@ evalExpr env (CallExpr functionName paramsExpCall) = do
                  ) varDaFunct  
 
             in (f, (union globais (union (intersection (difference finalS parameters) s) s)))
+        _ -> evalExpr env (CallExpr functionName paramsExpCall)
 -- Funcao para transformar uma lista de expression em uma lista de value
 
 evalList :: StateT -> [Expression] -> [Value] -> [Value]
