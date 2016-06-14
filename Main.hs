@@ -184,7 +184,19 @@ evalStmt env (ForStmt initial maybeComparation maybeIncrement stmts) = do
                         (Just increment) -> do
                             evalExpr env increment
                             evalStmt env (ForStmt NoInit maybeComparation maybeIncrement stmts)
-                else return Nil        
+                else return Nil 
+
+evalStmt env (WhileStmt test stmtBlock) = do
+    result <- evalExpr env test
+    case result of
+        (Bool b) -> if b then do
+            value <- evalStmt env stmtBlock
+            case value of
+             Break -> return Break
+             (Return val) -> return (Return val) 
+             _ -> evalStmt env (WhileStmt test stmtBlock)
+        else return Nil
+        _ -> error ("While is not defined for these arguments or some variables might not have been initialized")
 
 -- Do not touch this one :)
 evaluate :: StateT -> [Statement] -> StateTransformer Value
