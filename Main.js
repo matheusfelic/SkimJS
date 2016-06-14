@@ -28,8 +28,8 @@ function quicksort(l){
 			}
 			list = list.tail;
 		}
-		var resultMaior = l.head
-		var result = quicksort(menor).concat([l.head].concat(quicksort(maior)));
+		var major = [l.head].concat(quicksort(maior))
+		var result = quicksort(menor).concat(major);
 		return result;
 	}
 }

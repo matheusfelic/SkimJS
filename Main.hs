@@ -304,8 +304,9 @@ setVar var val = ST $ \s -> (val, insert var val s)
 --
 concatAux :: Value -> Value -> Value
 concatAux (Undeclared a) (Undeclared b) = concatAux a b
+concatAux (Undeclared a) (List b) = concatAux a (List b)
+concatAux (List a) (Undeclared b) = concatAux (List a) b
 concatAux (List a) (List b) =  (List (a ++ b))
-
 type StateT = Map String Value
 data StateTransformer t = ST (StateT -> (t, StateT))
 
