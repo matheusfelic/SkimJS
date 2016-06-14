@@ -84,11 +84,10 @@ evalExpr env (CallExpr functionName paramsExpCall) = do
      result <- evalExpr env functionName
      case result of
         (Error _) -> error "Function not defined"
-        (List []) -> return $ List (evalList env paramsExpCall []) -- concat com []
-        (List xs) -> return $ List (xs ++ (evalList env paramsExpCall [])) --concat sem lista vazia
+        (List xs) -> return $ List (xs ++ (evalList env paramsExpCall [])) --concat
         (FunctionValue name params listaStmts) -> ST $ \s -> 
             
-            let (ST f1) = mapM (evalExpr env) paramsExpCall                
+            let (ST f1) = mapM (evalExpr env) paramsExpCall             
                
                 (paramsEval, _) = f1 s
                 
