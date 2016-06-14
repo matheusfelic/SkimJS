@@ -8,33 +8,40 @@ function lenAux(x,y)
         return lenAux(x.tail, y+1);
     }
 }
-
+ 
 function len (x){
     return lenAux(x,0);
 }
-
-function quicksort(l){
-	var list = l.tail;
-	var menor = [];
-	var maior = [];
-	if(l == []){
-		return [];
-	}else{
-		while (list != []) {
-			if(l.head <= list.head){
-				menor.concat(list.head);
-			}else{
-				maior.concat(list.head);
-			}
-			list = list.tail;
-		}
-		var major = [l.head].concat(quicksort(maior))
-		var result = quicksort(menor).concat(major);
-		return result;
-	}
+ 
+function conca (ls, xs){
+    return ls.concat(xs);
 }
-
-var lista1 = [1,2,3];
-var c = len(lista1);
-var lista2 = [12,1,4,9,32,22,55,1,9,0,5]
-var z = quicksort(lista2);
+ 
+function quicksort(l){
+	var arrayEmpty = [];
+	if (l == arrayEmpty){
+		return arrayEmpty;
+	}
+    var arrayHead = l.head;
+	var listHead = [arrayHead];
+    var menor = [];
+    var maior = [];
+    var result = [];
+    var list = l.tail;
+    if(listHead != arrayEmpty){
+        while (list != arrayEmpty) {
+            if(l.head < list.head){
+                menor = conca(menor, listHead);
+            }else{
+                maior = conca(listHead, maior);
+            }
+                list = list.tail;
+        }
+        var major = conca(listHead, quicksort(maior));
+        result = conca(quicksort(menor), major);
+    }
+        return result;
+}
+ 
+var lista1 = [12,1,4,9,32,22,55,1,9,0,5]
+var z = quicksort(lista1);

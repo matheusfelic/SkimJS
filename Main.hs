@@ -34,12 +34,16 @@ evalExpr env (DotRef expr id) = do
                 case list of
                     (List []) -> return $ List []
                     (List (x:xs)) -> return x
-                    _ -> error ("Invalid Expression in Head")
+                    (Undeclared (List [])) -> return $ List []
+                    (Undeclared (List(x:xs))) -> return x
+                    _ -> error ("Invalid Expression in Tail")
             (Id "tail") -> do
                 list <- evalExpr env expr
                 case list of
                     (List []) -> return $ List []
                     (List (x:xs)) -> return $ List xs
+                    (Undeclared (List [])) -> return $ List []
+                    (Undeclared (List(x:xs))) -> return $ List xs
                     _ -> error ("Invalid Expression in Tail")
 
 evalExpr env (InfixExpr op expr1 expr2) = do
@@ -248,9 +252,13 @@ infixOp env OpEq   (List v1) (List v2) = do
     b2 <- infixOp env OpEq (List (tail v1)) (List (tail v2))
     ans <- (infixOp env OpLAnd b1 b2)
     return ans
+infixOp env OpNEq   (List []) (List []) = return $ Bool False
+infixOp env OpNEq   (List []) (List l) =  return $ Bool True
+infixOp env OpNEq   (List l) (List []) =  return $ Bool True
 infixOp env OpNEq  (List list1) (List list2) = do
     (Bool notAns) <- infixOp env OpEq  (List list1) (List list2)
     return $ Bool $ not (notAns)
+
 infixOp env OpAdd   (List v1) (List v2) = return $ List $ v1++v2
 
 infixOp env op (Var x) v2 = do
@@ -265,8 +273,8 @@ infixOp env op v1 (Var x) = do
         error@(Error _) -> return error 
         val -> infixOp env op v1 val
 
-infixOp env op _ _ = do 
-     error "Function is not defined for these arguments"
+infixOp env op c d = do 
+     error ("Function is not defined for" ++ show op++ show c ++ show d)
 --
 -- Environment and auxiliary functions
 --
