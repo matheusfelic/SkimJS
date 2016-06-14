@@ -3,4 +3,3 @@ function f (){
 }
 
 f();
-x;

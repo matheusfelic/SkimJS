@@ -13,28 +13,32 @@ function len (x){
     return lenAux(x,0);
 }
 
+function conca (ls, xs){
+	return ls.concat(xs);
+}
+
 function quicksort(l){
-	var list = l.tail;
-	var menor = [];
-	var maior = [];
 	if(l == []){
 		return [];
 	}else{
+	var list = l.tail;
+	var menor = [];
+	var maior = [];
+	var result = [];
+	var arrayHead = [l.head];
 		while (list != []) {
 			if(l.head <= list.head){
-				menor.concat(list.head);
+				menor = conca(menor, arrayHead);
 			}else{
-				maior.concat(list.head);
+				maior = conca(arrayHead, maior);
 			}
 			list = list.tail;
 		}
-		var major = [l.head].concat(quicksort(maior))
-		var result = quicksort(menor).concat(major);
+		var major = conca(arrayHead, quicksort(maior));
+		result = conca(quicksort(menor), major);
 		return result;
 	}
 }
 
-var lista1 = [1,2,3];
-var c = len(lista1);
-var lista2 = [12,1,4,9,32,22,55,1,9,0,5]
-var z = quicksort(lista2);
+var lista1 = [12,1,4,9,32,22,55,1,9,0,5]
+var z = quicksort(lista1);

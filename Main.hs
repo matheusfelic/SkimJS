@@ -41,12 +41,6 @@ evalExpr env (DotRef expr id) = do
                     (List []) -> return $ List []
                     (List (x:xs)) -> return $ List xs
                     _ -> error ("Invalid Expression")
-            (Id "concat") -> do -- evaluating concat
-                list <- evalExpr env expr
-                case list of
-                    (List []) -> return $ List []
-                    (List xs) -> return $ List xs
-                    _ -> error ("Invalid Expression")
 
 evalExpr env (InfixExpr op expr1 expr2) = do
     v1 <- evalExpr env expr1
@@ -307,6 +301,7 @@ concatAux (Undeclared a) (Undeclared b) = concatAux a b
 concatAux (Undeclared a) (List b) = concatAux a (List b)
 concatAux (List a) (Undeclared b) = concatAux (List a) b
 concatAux (List a) (List b) =  (List (a ++ b))
+
 type StateT = Map String Value
 data StateTransformer t = ST (StateT -> (t, StateT))
 
