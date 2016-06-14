@@ -27,7 +27,7 @@ instance Show Value where
   show (Error str) = "Error: " ++ str
   show (Return a) = show a
   show (Undeclared a) = show a
-  show (FunctionValue (Id name) params statemens) =  "Function " ++ name
+  show (FunctionValue (Id name) params statements) =  "Function " ++ name
   show Nil = ""
   show Break = "Break"
   

@@ -41,6 +41,13 @@ evalExpr env (DotRef expr id) = do
                     (List []) -> return $ List []
                     (List (x:xs)) -> return $ List xs
                     _ -> error ("Invalid Expression")
+            (Id "concat") -> do -- evaluating concat
+                list <- evalExpr env expr
+                case list of
+                    (List []) -> return $ List []
+                    (List xs) -> return $ List xs
+                    _ -> error ("Invalid Expression")
+
 evalExpr env (InfixExpr op expr1 expr2) = do
     v1 <- evalExpr env expr1
     v2 <- evalExpr env expr2
@@ -77,6 +84,8 @@ evalExpr env (CallExpr functionName paramsExpCall) = do
      result <- evalExpr env functionName
      case result of
         (Error _) -> error "Function not defined"
+        (List []) -> return $ List (evalList env paramsExpCall []) -- concat com []
+        (List xs) -> return $ List (xs ++ (evalList env paramsExpCall [])) --concat sem lista vazia
         (FunctionValue name params listaStmts) -> ST $ \s -> 
             
             let (ST f1) = mapM (evalExpr env) paramsExpCall                
