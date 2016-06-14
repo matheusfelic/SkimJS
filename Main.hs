@@ -80,7 +80,7 @@ evalExpr env (AssignExpr OpAssign (LVar var) expr) = do
         _ -> do
             e <- evalExpr env expr
             setVar var e
-			
+
 evalExpr env (CallExpr (DotRef (VarRef (Id var1))  functionId) parameters) = do
     v1 <- stateLookup env var1
     case functionId of
@@ -92,7 +92,7 @@ evalExpr env (CallExpr (DotRef (VarRef (Id var1))  functionId) parameters) = do
         -- Variable defined, let's set its value
         _ -> do
             error ("dotRef Function Not Defined")
-			
+
 evalExpr env (CallExpr functionName paramsExpCall) = do
      result <- evalExpr env functionName
      case result of
@@ -304,6 +304,8 @@ setVar var val = ST $ \s -> (val, insert var val s)
 --
 concatAux :: Value -> Value -> Value
 concatAux (Undeclared a) (Undeclared b) = concatAux a b
+concatAux (Undeclared a) (List b) = concatAux a (List b)
+concatAux (List a) (Undeclared b) = concatAux (List a) b
 concatAux (List a) (List b) =  (List (a ++ b))
 
 type StateT = Map String Value
